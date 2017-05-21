@@ -5,12 +5,6 @@ import pymongo
 
 # Define MongoClient
 
-client = pymongo.MongoClient(
-        os.environ.get('MONGO_HOST'),
-        int(os.environ.get('MONGO_PORT'))
-        )
-db = client.test
-coll = db.test_collection
 
 # Debug stuff
 #print('{:%Y-%m-%d %H:%M:%S.%f}'.format(datetime.now()))
@@ -37,6 +31,13 @@ def on_connect(client, userdata, rc):
     # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
     
+    mongo = pymongo.MongoClient(
+        os.environ.get('MONGO_HOST'),
+        int(os.environ.get('MONGO_PORT'))
+        )
+    db = mongo.mqtt
+    coll = db.tele
+    
     post = {
             "timestamp": '{:%Y-%m-%d %H:%M:%S.%f}'.format(datetime.now()),
             "topic": msg._topic.decode("utf-8") ,
@@ -48,6 +49,8 @@ def on_message(client, userdata, msg):
     print('Inserted in mongo at: ', post_id)
     print(post)
     
+    mongo.close()
+
 client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
