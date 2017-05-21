@@ -1,6 +1,16 @@
 import paho.mqtt.client as mqtt
 from datetime import datetime
 import os
+import pymongo
+
+# Define MongoClient
+
+client = pymongo.MongoClient(
+        os.environ.get('MONGO_HOST'),
+        int(os.environ.get('MONGO_PORT'))
+        )
+db = client.test
+coll = db.test_collection
 
 # Debug stuff
 #print('{:%Y-%m-%d %H:%M:%S.%f}'.format(datetime.now()))
@@ -9,6 +19,8 @@ import os
 #print(os.environ.get('MQTT_USERNAME'))
 #print(os.environ.get('MQTT_PASSWORD'))
 #print(os.environ.get('MQTT_TOPIC'))
+#print(os.environ.get('MONGO_HOST'))
+#print(os.environ.get('MONGO_PORT'))
 
 
 # The callback for when the client receives a a
@@ -27,10 +39,13 @@ def on_message(client, userdata, msg):
     
     post = {
             "timestamp": '{:%Y-%m-%d %H:%M:%S.%f}'.format(datetime.now()),
-            "topic": os.environ.get('MQTT_TOPIC'),
-            "soil" : 999
+            "topic": msg._topic.decode("utf-8") ,
+            "value" : msg.payload.decode("utf-8").strip() 
             }
 
+    post_id = coll.insert_one(post).inserted_id
+    
+    print('Inserted in mongo at: ', post_id)
     print(post)
     
 client = mqtt.Client()
